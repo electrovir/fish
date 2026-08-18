@@ -15,7 +15,7 @@ const sharkWidthMinimum = 190;
 const sharkWidthMaximum = 380;
 const sharkHeightRatio = 5;
 const sharkSpawnPositionOffsetRatio = 0.25;
-const sharkDeathRiseRatio = 1.15;
+const sharkDeathRiseRatio = 0.4;
 
 const sharkParamsShape = defineShape({
     isTypingShark: false,
@@ -55,7 +55,6 @@ function renderActiveSharkView({
     sharkBodyView,
     sharkWidth,
     typedText,
-    wordBackground,
 }: Readonly<{
     explosion: Graphics;
     focusedSharkBody: Sprite;
@@ -65,7 +64,6 @@ function renderActiveSharkView({
     sharkBodyView: Container;
     sharkWidth: number;
     typedText: Text;
-    wordBackground: Graphics;
 }>) {
     const sharkHeight = sharkWidth / sharkHeightRatio;
     const fontSize = clamp(sharkWidth * 0.105, {
@@ -75,6 +73,7 @@ function renderActiveSharkView({
     const word = params.word.toUpperCase();
     const typedWord = word.slice(0, params.typedCharacterCount);
     const remainingWord = word.slice(params.typedCharacterCount);
+    const typedFontSize = typedWord ? fontSize * 0.9 : fontSize;
     const letterSpacing = fontSize * 0.08;
 
     sharkBody.width = sharkWidth;
@@ -87,7 +86,7 @@ function renderActiveSharkView({
     focusedSharkBody.height = (sharkHeight * focusedSharkSvgHeight) / sharkSvgHeight;
     focusedSharkBody.visible = params.isTypingShark;
     updateTextStyle({
-        fontSize,
+        fontSize: typedFontSize,
         text: typedText,
     });
     updateTextStyle({
@@ -95,36 +94,29 @@ function renderActiveSharkView({
         text: remainingText,
     });
     typedText.style.fill = '#7effd8';
-    remainingText.style.fill = '#f3ffff';
+    typedText.style.stroke = {
+        color: '#0e574e',
+        width: Math.max(1, typedFontSize * 0.06),
+    };
+    remainingText.style.fill = '#07141f';
+    remainingText.style.stroke = {
+        color: '#f5ffff',
+        width: Math.max(1, fontSize * 0.13),
+    };
     typedText.text = typedWord;
     remainingText.text = remainingWord;
 
     const textWidth =
         typedText.width + remainingText.width + (typedWord && remainingWord ? letterSpacing : 0);
-    const boxWidth = Math.max(textWidth + fontSize * 0.64, fontSize * 3.2);
-    const boxHeight = fontSize * 1.22;
     const wordCenterX = sharkWidth * 0.1;
     const firstLetterX = wordCenterX - textWidth / 2;
 
     explosion.clear();
     explosion.visible = false;
-    wordBackground.visible = true;
     typedText.visible = true;
     remainingText.visible = true;
-    wordBackground.clear();
-    wordBackground
-        .roundRect(wordCenterX - boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight, boxHeight / 2)
-        .fill({
-            alpha: params.isTypingShark ? 0.92 : 0.78,
-            color: params.isTypingShark ? '#04333a' : '#041c32',
-        })
-        .stroke({
-            alpha: params.isTypingShark ? 1 : 0.45,
-            color: params.isTypingShark ? '#7effd8' : '#c7faff',
-            width: 2,
-        });
     typedText.x = firstLetterX;
-    typedText.y = params.isTypingShark && typedWord ? 1 : 0;
+    typedText.y = typedWord ? fontSize * 0.1 : 0;
     remainingText.x = typedText.x + typedText.width + (typedWord ? letterSpacing : 0);
     remainingText.y = 0;
 }
@@ -139,7 +131,6 @@ function renderDefeatedSharkView({
     sharkDeathProgress,
     sharkWidth,
     typedText,
-    wordBackground,
 }: Readonly<{
     explosion: Graphics;
     explosionGradient: FillGradient;
@@ -150,24 +141,22 @@ function renderDefeatedSharkView({
     sharkDeathProgress: number;
     sharkWidth: number;
     typedText: Text;
-    wordBackground: Graphics;
 }>) {
-    const explosionRadius = 120 * (0.6 + sharkDeathProgress * 3);
+    const explosionRadius = 30 + sharkDeathProgress ** 0.7 * 250;
 
     sharkBody.width = sharkWidth;
     sharkBody.height = sharkWidth / sharkHeightRatio;
     sharkBody.visible = true;
     focusedSharkBody.visible = false;
-    wordBackground.visible = false;
     typedText.visible = false;
     remainingText.visible = false;
     explosion.visible = true;
     explosion.clear();
     explosion.alpha = 1 - sharkDeathProgress;
     explosion.circle(0, 0, explosionRadius).fill(explosionGradient);
-    sharkBodyView.alpha = 1 - sharkDeathProgress;
-    sharkBodyView.rotation = Math.PI * sharkDeathProgress;
-    sharkBodyView.scale.set(1 + sharkDeathProgress * 0.3);
+    sharkBodyView.alpha = 1 - sharkDeathProgress ** 2;
+    sharkBodyView.rotation = Math.PI;
+    sharkBodyView.scale.set(1);
 }
 
 export class SharkEntity extends defineEntity({
@@ -206,7 +195,6 @@ export class SharkEntity extends defineEntity({
     protected sharkBodyView: Container | undefined;
     protected sharkDeathProgress: number | undefined;
     protected typedText: Text | undefined;
-    protected wordBackground: Graphics | undefined;
 
     protected async loadSharkTextures({
         focusedSharkBody,
@@ -242,7 +230,6 @@ export class SharkEntity extends defineEntity({
         const sharkBody = assertWrap.isDefined(this.sharkBody);
         const sharkBodyView = assertWrap.isDefined(this.sharkBodyView);
         const typedText = assertWrap.isDefined(this.typedText);
-        const wordBackground = assertWrap.isDefined(this.wordBackground);
         const sharkWidth = clamp(this.pixi.screen.width * sharkWidthRatio, {
             max: sharkWidthMaximum,
             min: sharkWidthMinimum,
@@ -265,7 +252,6 @@ export class SharkEntity extends defineEntity({
                 sharkBodyView,
                 sharkWidth,
                 typedText,
-                wordBackground,
             });
             view.zIndex = this.params.isTypingShark
                 ? FishGameLayer.ActiveShark + 0.5
@@ -281,7 +267,6 @@ export class SharkEntity extends defineEntity({
                 sharkDeathProgress: this.sharkDeathProgress,
                 sharkWidth,
                 typedText,
-                wordBackground,
             });
             view.zIndex = FishGameLayer.DefeatedShark;
         }
@@ -293,7 +278,6 @@ export class SharkEntity extends defineEntity({
         const sharkBodyView = new Container();
         const sharkBody = new Sprite();
         const focusedSharkBody = new Sprite();
-        const wordBackground = new Graphics();
         const typedText = new Text({
             anchor: {
                 x: 0,
@@ -341,19 +325,11 @@ export class SharkEntity extends defineEntity({
         focusedSharkBody.anchor.set(0.5);
         sharkBodyView.zIndex = 0;
         focusedSharkBody.zIndex = 1;
-        wordBackground.zIndex = 2;
-        typedText.zIndex = 3;
-        remainingText.zIndex = 3;
-        explosion.zIndex = 4;
+        typedText.zIndex = 2;
+        remainingText.zIndex = 2;
+        explosion.zIndex = 3;
         sharkBodyView.addChild(sharkBody);
-        view.addChild(
-            sharkBodyView,
-            focusedSharkBody,
-            wordBackground,
-            typedText,
-            remainingText,
-            explosion,
-        );
+        view.addChild(sharkBodyView, focusedSharkBody, typedText, remainingText, explosion);
         this.explosion = explosion;
         this.explosionGradient = explosionGradient;
         this.focusedSharkBody = focusedSharkBody;
@@ -361,7 +337,6 @@ export class SharkEntity extends defineEntity({
         this.sharkBody = sharkBody;
         this.sharkBodyView = sharkBodyView;
         this.typedText = typedText;
-        this.wordBackground = wordBackground;
         this.renderSharkView(view);
         void this.loadSharkTextures({
             focusedSharkBody,
