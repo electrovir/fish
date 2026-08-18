@@ -68,7 +68,7 @@ export class WaterEntity extends defineEntity({
                 },
                 colorStops: [
                     {
-                        color: `rgb(181 243 255 / ${0.27 * (1 - this.params.darknessRatio)})`,
+                        color: `rgb(181 243 255 / ${(27 * (1 - this.params.darknessRatio)).toFixed(4)}%)`,
                         offset: 0,
                     },
                     {

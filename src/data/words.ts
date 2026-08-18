@@ -4,6 +4,10 @@ import mostCommonEnglishWords from 'wordlist-english/english-words-10.json' with
 import commonEnglishWords from 'wordlist-english/english-words-20.json' with {type: 'json'};
 import familiarEnglishWords from 'wordlist-english/english-words-35.json' with {type: 'json'};
 
+const exclusionList = [
+    'bra',
+];
+
 export const typingWords: ReadonlyArray<string> = removeDuplicates(
     filterMap(
         [
@@ -12,6 +16,12 @@ export const typingWords: ReadonlyArray<string> = removeDuplicates(
             ...familiarEnglishWords,
         ] as ReadonlyArray<string>,
         (word) => word.trim().toLowerCase(),
-        (word) => /^[a-z]{3}$/u.test(word) && !badWords.includes(word),
+        (word) => {
+            return (
+                /^[a-z]{3}$/u.test(word) &&
+                !exclusionList.includes(word) &&
+                !badWords.includes(word)
+            );
+        },
     ),
 );

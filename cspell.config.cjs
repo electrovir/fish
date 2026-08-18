@@ -8,7 +8,8 @@ module.exports = {
     words: [
         ...baseConfig.words,
         'badwords',
-        'Hyperlegible',
+        'hyperlegible',
+        'linejoin',
         'wordlist',
     ],
 };
