@@ -1,0 +1,18 @@
+/* cspell:word Hyperlegible */
+
+@font-face {
+    font-family: 'Atkinson Hyperlegible Next';
+    src: url('/fonts/atkinson-hyperlegible-next-variable.woff2') format('woff2-variations');
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+html,
+body {
+    background: #0d4265;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+}
