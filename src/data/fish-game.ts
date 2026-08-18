@@ -1,8 +1,10 @@
 import {assertWrap} from '@augment-vir/assert';
-import {randomBoolean, randomInteger} from '@augment-vir/common';
+import {clamp, randomBoolean, randomInteger} from '@augment-vir/common';
+import {typingWords} from './words.js';
 
 export type DefeatedShark = {
     sharkDeathProgress: number;
+    sharkId: number;
     sharkPosition: number;
     sharkVerticalPosition: number;
 };
@@ -52,257 +54,8 @@ export type FishGame = {
     wordOrder: ReadonlyArray<string>;
 };
 
-const targetWords = [
-    'ace',
-    'act',
-    'add',
-    'age',
-    'aid',
-    'aim',
-    'air',
-    'ale',
-    'all',
-    'and',
-    'ant',
-    'any',
-    'ape',
-    'arc',
-    'arm',
-    'art',
-    'ash',
-    'ask',
-    'ate',
-    'bad',
-    'bag',
-    'ban',
-    'bar',
-    'bat',
-    'bay',
-    'bed',
-    'bee',
-    'big',
-    'bin',
-    'bit',
-    'bob',
-    'box',
-    'boy',
-    'bun',
-    'bus',
-    'buy',
-    'cab',
-    'can',
-    'cap',
-    'car',
-    'cat',
-    'cod',
-    'cow',
-    'cup',
-    'dad',
-    'day',
-    'den',
-    'did',
-    'dig',
-    'dim',
-    'dip',
-    'dog',
-    'dot',
-    'dry',
-    'due',
-    'dug',
-    'ear',
-    'eat',
-    'eel',
-    'egg',
-    'end',
-    'era',
-    'eve',
-    'eye',
-    'fan',
-    'far',
-    'fat',
-    'fed',
-    'fee',
-    'few',
-    'fin',
-    'fig',
-    'fit',
-    'fix',
-    'fly',
-    'fog',
-    'for',
-    'fox',
-    'fun',
-    'fur',
-    'gap',
-    'gas',
-    'get',
-    'gin',
-    'god',
-    'got',
-    'gum',
-    'guy',
-    'gym',
-    'had',
-    'ham',
-    'hat',
-    'hay',
-    'hen',
-    'her',
-    'hid',
-    'him',
-    'hip',
-    'hit',
-    'hop',
-    'hot',
-    'how',
-    'hub',
-    'hug',
-    'hut',
-    'ice',
-    'ill',
-    'ink',
-    'jam',
-    'jar',
-    'jaw',
-    'jet',
-    'job',
-    'joy',
-    'key',
-    'kid',
-    'kit',
-    'lab',
-    'lap',
-    'law',
-    'lay',
-    'leg',
-    'let',
-    'lid',
-    'lie',
-    'lip',
-    'log',
-    'lot',
-    'low',
-    'mad',
-    'man',
-    'map',
-    'mat',
-    'may',
-    'men',
-    'met',
-    'mix',
-    'mom',
-    'mop',
-    'mud',
-    'mug',
-    'nap',
-    'net',
-    'new',
-    'nod',
-    'nor',
-    'not',
-    'now',
-    'nut',
-    'oak',
-    'odd',
-    'off',
-    'oil',
-    'old',
-    'one',
-    'owl',
-    'own',
-    'pad',
-    'pal',
-    'pan',
-    'pat',
-    'paw',
-    'pay',
-    'pea',
-    'pen',
-    'pet',
-    'pie',
-    'pig',
-    'pin',
-    'pit',
-    'pod',
-    'pop',
-    'pot',
-    'pup',
-    'put',
-    'ray',
-    'rag',
-    'ram',
-    'ran',
-    'rat',
-    'raw',
-    'red',
-    'rib',
-    'rid',
-    'rim',
-    'rip',
-    'rob',
-    'rod',
-    'row',
-    'rub',
-    'rug',
-    'run',
-    'sad',
-    'saw',
-    'say',
-    'sea',
-    'see',
-    'set',
-    'sew',
-    'she',
-    'shy',
-    'sip',
-    'sit',
-    'six',
-    'sky',
-    'son',
-    'sow',
-    'spa',
-    'spy',
-    'sum',
-    'sun',
-    'tab',
-    'tag',
-    'tan',
-    'tap',
-    'tea',
-    'ten',
-    'the',
-    'tie',
-    'tin',
-    'tip',
-    'toe',
-    'top',
-    'toy',
-    'try',
-    'tub',
-    'two',
-    'use',
-    'van',
-    'vat',
-    'vet',
-    'was',
-    'wax',
-    'way',
-    'web',
-    'wet',
-    'who',
-    'why',
-    'win',
-    'wit',
-    'won',
-    'wow',
-    'yes',
-    'yet',
-    'you',
-    'zip',
-    'zoo',
-] satisfies ReadonlyArray<string>;
-
 const sharkTravelPercentagePerMillisecond = 0.003;
+const sharkSlowdownExponent = 2.5;
 const sharkDeathDurationMilliseconds = 1400;
 const sharkVerticalLanes = [
     8,
@@ -317,6 +70,7 @@ const sharkVerticalLanes = [
 const minimumSharkVerticalSeparation = 8;
 const sharkVerticalJitter = 1;
 const sharkSpawnPosition = 100;
+const sharkMinimumPosition = 7;
 const sharkSpawnHorizontalOverlapPosition = 65;
 const rapidClearWindowMilliseconds = 1800;
 const rapidClearStreakForExtraSharks = 2;
@@ -346,7 +100,7 @@ function randomNumber({maximum, minimum}: Readonly<{maximum: number; minimum: nu
 }
 
 function createWordOrder() {
-    return targetWords.reduce<ReadonlyArray<string>>((wordOrder, word, index) => {
+    return typingWords.reduce<ReadonlyArray<string>>((wordOrder, word, index) => {
         return wordOrder.toSpliced(
             randomInteger({
                 max: index,
@@ -403,6 +157,18 @@ function createSlowSharkSpawnInterval() {
     });
 }
 
+function getSharkTravelSpeedRatio({sharkPosition}: Readonly<Pick<ActiveShark, 'sharkPosition'>>) {
+    const sharkTravelProgress = clamp(
+        (sharkSpawnPosition - sharkPosition) / (sharkSpawnPosition - sharkMinimumPosition),
+        {
+            max: 1,
+            min: 0,
+        },
+    );
+
+    return Math.exp(-sharkSlowdownExponent * sharkTravelProgress);
+}
+
 function createActiveShark({
     activeSharks,
     sharkId,
@@ -439,8 +205,8 @@ function createBubble({
             minimum: 0,
         }),
         opacity: randomNumber({
-            maximum: 0.8,
-            minimum: 0.35,
+            maximum: 0.4,
+            minimum: 0.12,
         }),
         risePerShark:
             bubbleRisePercentagePerShark *
@@ -470,7 +236,7 @@ function createBubbles({
     minimumVerticalPosition: number;
     verticalPositionRange: number;
 }>) {
-    return targetWords.slice(0, bubbleCount).map((_word, bubbleIndex) => {
+    return typingWords.slice(0, bubbleCount).map((_word, bubbleIndex) => {
         return createBubble({
             bubbleId: firstBubbleId + bubbleIndex,
             minimumVerticalPosition,
@@ -543,7 +309,7 @@ function createBackgroundFish({
 
 function createBackgroundFishField() {
     return {
-        backgroundFish: targetWords.slice(0, initialBackgroundFishCount).map((_word, fishId) => {
+        backgroundFish: typingWords.slice(0, initialBackgroundFishCount).map((_word, fishId) => {
             return createBackgroundFish({
                 fishId,
                 minimumVerticalPosition: 0,
@@ -571,7 +337,7 @@ function advanceBackgroundFishField({
     return {
         backgroundFish: [
             ...raisedBackgroundFish,
-            ...targetWords.slice(0, replacementFishCount).map((_word, fishIndex) => {
+            ...typingWords.slice(0, replacementFishCount).map((_word, fishIndex) => {
                 return createBackgroundFish({
                     fishId: nextBackgroundFishId + fishIndex,
                     minimumVerticalPosition: 104,
@@ -818,8 +584,13 @@ export function advanceFishGame({
         return {
             ...shark,
             sharkPosition: Math.max(
-                7,
-                shark.sharkPosition - elapsedMilliseconds * sharkTravelPercentagePerMillisecond,
+                sharkMinimumPosition,
+                shark.sharkPosition -
+                    elapsedMilliseconds *
+                        sharkTravelPercentagePerMillisecond *
+                        getSharkTravelSpeedRatio({
+                            sharkPosition: shark.sharkPosition,
+                        }),
             ),
         };
     });
@@ -891,6 +662,7 @@ export function typeFishGameCharacter({
                   ...game.defeatedSharks,
                   {
                       sharkDeathProgress: 0,
+                      sharkId: typingShark.sharkId,
                       sharkPosition: typingShark.sharkPosition,
                       sharkVerticalPosition: typingShark.sharkVerticalPosition,
                   },
