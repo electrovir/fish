@@ -29,7 +29,6 @@ export type BackgroundFish = {
     horizontalPosition: number;
     horizontalTravelPercentagePerMillisecond: number;
     isSwimmingLeft: boolean;
-    opacity: number;
     risePerShark: number;
     size: number;
     verticalPosition: number;
@@ -338,9 +337,7 @@ function createWordOrder() {
     }, []);
 }
 
-function createSharkVerticalPosition({
-    activeSharks,
-}: Readonly<Pick<FishGame, 'activeSharks'>>) {
+function createSharkVerticalPosition({activeSharks}: Readonly<Pick<FishGame, 'activeSharks'>>) {
     const sharksOverlappingSpawnArea = activeSharks.filter(({sharkPosition}) => {
         return sharkPosition >= sharkSpawnHorizontalOverlapPosition;
     });
@@ -462,9 +459,8 @@ function createBackgroundFish({
         horizontalPosition: horizontalPosition ?? Math.random() * 100,
         horizontalTravelPercentagePerMillisecond: 0.001 + Math.random() * 0.0025,
         isSwimmingLeft: Math.random() < 0.5,
-        opacity: 0.18 + Math.random() * 0.25,
         risePerShark: fishRisePercentagePerShark * (0.45 + Math.random() * 0.85),
-        size: 14 + Math.random() * 18,
+        size: 8 + Math.random() * 12,
         verticalPosition: minimumVerticalPosition + Math.random() * verticalPositionRange,
     };
 }
@@ -833,7 +829,7 @@ export function typeFishGameCharacter({
               sharkSpawnCountdownMilliseconds:
                   game.millisecondsSinceLastSharkClear < rapidClearWindowMilliseconds &&
                   game.rapidClearStreak + 1 >= rapidClearStreakForExtraSharks
-                      ? game.sharkSpawnCountdownMilliseconds ?? createExtraSharkSpawnInterval()
+                      ? (game.sharkSpawnCountdownMilliseconds ?? createExtraSharkSpawnInterval())
                       : undefined,
               typingSharkId: undefined,
           }

@@ -4,8 +4,8 @@ import {describe, it} from '@augment-vir/test';
 import {
     createFishGame,
     getFishGameWord,
-    type FishGame,
     typeFishGameCharacter,
+    type FishGame,
 } from './fish-game.js';
 
 function defeatCurrentShark({game}: Readonly<{game: FishGame}>) {
