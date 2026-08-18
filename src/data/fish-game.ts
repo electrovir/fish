@@ -1,4 +1,5 @@
 import {assertWrap} from '@augment-vir/assert';
+import {randomBoolean, randomInteger} from '@augment-vir/common';
 
 export type DefeatedShark = {
     sharkDeathProgress: number;
@@ -330,10 +331,30 @@ const initialBackgroundFishCount = 8;
 const fishExitPosition = -8;
 const fishHorizontalExitPosition = 108;
 const fishRisePercentagePerShark = 8;
+const randomNumberPrecision = 1_000_000;
+
+function randomNumber({maximum, minimum}: Readonly<{maximum: number; minimum: number}>) {
+    return (
+        minimum +
+        ((maximum - minimum) *
+            randomInteger({
+                max: randomNumberPrecision,
+                min: 0,
+            })) /
+            randomNumberPrecision
+    );
+}
 
 function createWordOrder() {
     return targetWords.reduce<ReadonlyArray<string>>((wordOrder, word, index) => {
-        return wordOrder.toSpliced(Math.floor(Math.random() * (index + 1)), 0, word);
+        return wordOrder.toSpliced(
+            randomInteger({
+                max: index,
+                min: 0,
+            }),
+            0,
+            word,
+        );
     }, []);
 }
 
@@ -355,19 +376,31 @@ function createSharkVerticalPosition({activeSharks}: Readonly<Pick<FishGame, 'ac
     return (
         assertWrap.isDefined(
             candidateSharkVerticalLanes[
-                Math.floor(Math.random() * candidateSharkVerticalLanes.length)
+                randomInteger({
+                    max: candidateSharkVerticalLanes.length - 1,
+                    min: 0,
+                })
             ],
         ) +
-        (Math.random() * 2 - 1) * sharkVerticalJitter
+        randomNumber({
+            maximum: sharkVerticalJitter,
+            minimum: -sharkVerticalJitter,
+        })
     );
 }
 
 function createExtraSharkSpawnInterval() {
-    return 900 + Math.random() * 1500;
+    return randomNumber({
+        maximum: 2400,
+        minimum: 900,
+    });
 }
 
 function createSlowSharkSpawnInterval() {
-    return 3000 + Math.random() * 1800;
+    return randomNumber({
+        maximum: 4800,
+        minimum: 3000,
+    });
 }
 
 function createActiveShark({
@@ -382,7 +415,9 @@ function createActiveShark({
     return {
         sharkId,
         sharkPosition: sharkSpawnPosition,
-        sharkVerticalPosition: createSharkVerticalPosition({activeSharks}),
+        sharkVerticalPosition: createSharkVerticalPosition({
+            activeSharks,
+        }),
         typedCharacterCount: 0,
         word,
     };
@@ -399,11 +434,28 @@ function createBubble({
 }>): FishGameBubble {
     return {
         bubbleId,
-        horizontalPosition: Math.random() * 100,
-        opacity: 0.35 + Math.random() * 0.45,
-        risePerShark: bubbleRisePercentagePerShark * (0.55 + Math.random() * 0.9),
-        size: 7 + Math.random() * 28,
-        verticalPosition: minimumVerticalPosition + Math.random() * verticalPositionRange,
+        horizontalPosition: randomNumber({
+            maximum: 100,
+            minimum: 0,
+        }),
+        opacity: randomNumber({
+            maximum: 0.8,
+            minimum: 0.35,
+        }),
+        risePerShark:
+            bubbleRisePercentagePerShark *
+            randomNumber({
+                maximum: 1.45,
+                minimum: 0.55,
+            }),
+        size: randomNumber({
+            maximum: 35,
+            minimum: 7,
+        }),
+        verticalPosition: randomNumber({
+            maximum: minimumVerticalPosition + verticalPositionRange,
+            minimum: minimumVerticalPosition,
+        }),
     };
 }
 
@@ -428,8 +480,10 @@ function createBubbles({
 }
 
 function createBubbleField() {
-    const bubbleCount =
-        minimumInitialBubbleCount + Math.floor(Math.random() * initialBubbleCountVariation);
+    const bubbleCount = randomInteger({
+        max: minimumInitialBubbleCount + initialBubbleCountVariation - 1,
+        min: minimumInitialBubbleCount,
+    });
 
     return {
         bubbles: createBubbles({
@@ -454,14 +508,36 @@ function createBackgroundFish({
     verticalPositionRange: number;
 }>): BackgroundFish {
     return {
-        colorHue: Math.round(Math.random() * 360),
+        colorHue: randomInteger({
+            max: 360,
+            min: 0,
+        }),
         fishId,
-        horizontalPosition: horizontalPosition ?? Math.random() * 100,
-        horizontalTravelPercentagePerMillisecond: 0.001 + Math.random() * 0.0025,
-        isSwimmingLeft: Math.random() < 0.5,
-        risePerShark: fishRisePercentagePerShark * (0.45 + Math.random() * 0.85),
-        size: 8 + Math.random() * 12,
-        verticalPosition: minimumVerticalPosition + Math.random() * verticalPositionRange,
+        horizontalPosition:
+            horizontalPosition ??
+            randomNumber({
+                maximum: 100,
+                minimum: 0,
+            }),
+        horizontalTravelPercentagePerMillisecond: randomNumber({
+            maximum: 0.0035,
+            minimum: 0.001,
+        }),
+        isSwimmingLeft: randomBoolean(50),
+        risePerShark:
+            fishRisePercentagePerShark *
+            randomNumber({
+                maximum: 1.3,
+                minimum: 0.45,
+            }),
+        size: randomNumber({
+            maximum: 20,
+            minimum: 8,
+        }),
+        verticalPosition: randomNumber({
+            maximum: minimumVerticalPosition + verticalPositionRange,
+            minimum: minimumVerticalPosition,
+        }),
     };
 }
 
@@ -666,9 +742,7 @@ function advanceSharkSpawning({
                     : sharkSpawnCountdownMilliseconds,
             wordIndex: game.wordIndex,
         };
-    }
-
-    if (
+    } else if (
         game.rapidClearStreak < rapidClearStreakForExtraSharks ||
         sharkSpawnCountdownMilliseconds > 0
     ) {
@@ -678,15 +752,15 @@ function advanceSharkSpawning({
             sharkSpawnCountdownMilliseconds,
             wordIndex: game.wordIndex,
         };
+    } else {
+        return {
+            ...addActiveShark({
+                ...game,
+                activeSharks,
+            }),
+            sharkSpawnCountdownMilliseconds: createExtraSharkSpawnInterval(),
+        };
     }
-
-    return {
-        ...addActiveShark({
-            ...game,
-            activeSharks,
-        }),
-        sharkSpawnCountdownMilliseconds: createExtraSharkSpawnInterval(),
-    };
 }
 
 export function createFishGame(): FishGame {

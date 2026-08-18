@@ -38,7 +38,9 @@ describe('Fish game word entry', () => {
                 'dog',
             ],
         };
-        const completedGame = defeatCurrentShark({game});
+        const completedGame = defeatCurrentShark({
+            game,
+        });
 
         assert.deepEquals(
             {

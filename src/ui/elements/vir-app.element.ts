@@ -359,20 +359,6 @@ function drawDiver({
     context.fillStyle = '#9fefff';
     context.roundRect(86, 49, 36, 19, 8);
     context.fill();
-    context.strokeStyle = '#d5ac8c';
-    context.lineWidth = 15;
-    context.lineCap = 'round';
-    context.beginPath();
-    context.moveTo(124, 62);
-    context.quadraticCurveTo(158, 72, 189, 99);
-    context.stroke();
-    context.fillStyle = '#d5ac8c';
-    context.beginPath();
-    context.moveTo(189, 99);
-    context.lineTo(212, 101);
-    context.lineTo(198, 115);
-    context.closePath();
-    context.fill();
     context.fillStyle = '#e95d45';
     context.fillRect(125, 145, 31, 13);
     context.fillRect(45, 144, 28, 17);
@@ -525,7 +511,13 @@ function drawWord({
     context.textAlign = 'left';
     const firstLetterX = x - wordWidth / 2;
 
-    word.split('').reduce((letterX, letter, index) => {
+    word.split('').forEach((letter, index) => {
+        const letterX = word
+            .slice(0, index)
+            .split('')
+            .reduce((currentX, priorLetter) => {
+                return currentX + context.measureText(priorLetter).width + letterSpacing;
+            }, firstLetterX);
         context.fillStyle =
             isTypingShark && index < shark.typedCharacterCount ? '#7effd8' : '#f3ffff';
         context.fillText(
@@ -533,9 +525,7 @@ function drawWord({
             letterX,
             y + (isTypingShark && index < shark.typedCharacterCount ? 1 : 0),
         );
-
-        return letterX + context.measureText(letter).width + letterSpacing;
-    }, firstLetterX);
+    });
     context.restore();
 }
 
@@ -678,7 +668,9 @@ function drawFishGame({
     canvas: HTMLCanvasElement;
     game: Readonly<FishGame>;
 }>) {
-    const dimensions = setCanvasDimensions({canvas});
+    const dimensions = setCanvasDimensions({
+        canvas,
+    });
     const context = assertWrap.isDefined(canvas.getContext('2d'));
 
     context.setTransform(dimensions.pixelRatio, 0, 0, dimensions.pixelRatio, 0, 0);
@@ -776,7 +768,7 @@ function createTypingListener({state}: Readonly<{state: Partial<FishGameEngineSt
 const fishGameCanvasMod = defineAnthaMod<FishGameEngineState>({
     executeImmediately: true,
     frequency: {
-        ticks: 1000000,
+        ticks: 1_000_000,
     },
     initState: {
         game: createFishGame(),
@@ -816,7 +808,9 @@ const fishGameMod = defineAnthaMod<FishGameEngineState>({
             hostElement.focus({
                 preventScroll: true,
             });
-            state.keyboardListener = createTypingListener({state});
+            state.keyboardListener = createTypingListener({
+                state,
+            });
             hostElement.addEventListener('keydown', state.keyboardListener);
         }
 
