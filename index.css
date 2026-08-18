@@ -2,7 +2,7 @@
 
 @font-face {
     font-family: 'Atkinson Hyperlegible Next';
-    src: url('/fonts/atkinson-hyperlegible-next-variable.woff2') format('woff2-variations');
+    src: url('./fonts/atkinson-hyperlegible-next-variable.woff2') format('woff2-variations');
     font-weight: 200 800;
     font-style: normal;
     font-display: swap;
