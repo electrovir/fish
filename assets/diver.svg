@@ -60,29 +60,9 @@
         stroke-width="5"
         stroke-linejoin="round"
     />
+    <!-- cspell:ignore linecap -->
     <path d="M69 96H124" stroke="#ae7b0a" stroke-width="4" stroke-linecap="round" />
     <path d="M72 108H120" stroke="#fff56c" stroke-width="3" stroke-linecap="round" opacity="0.8" />
-    <path
-        d="M112 90C130 89 145 98 158 106L187 117L181 132L148 122C133 120 119 113 110 104Z"
-        fill="url(#suit-yellow)"
-        stroke="#3a3c18"
-        stroke-width="5"
-        stroke-linejoin="round"
-    />
-    <path
-        d="M151 108L189 118L185 132L150 122Z"
-        fill="#e7f7e7"
-        stroke="#3a3c18"
-        stroke-width="4"
-        stroke-linejoin="round"
-    />
-    <path
-        d="M183 119L199 124L190 135L181 132Z"
-        fill="#d3a310"
-        stroke="#3a3c18"
-        stroke-width="4"
-        stroke-linejoin="round"
-    />
     <circle cx="73" cy="86" r="5" fill="#fff36a" stroke="#986f08" stroke-width="2" />
     <circle cx="88" cy="92" r="4" fill="#d39d0d" />
     <circle cx="96" cy="105" r="3" fill="#fff36a" />
